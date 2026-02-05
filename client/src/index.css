@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+.bodyText {
+  font-family: "Inter", sans-serif;
+}
+
+.game-title,
+.score,
+.timer,
+.price {
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(1.9rem, 6vw, 4.5rem);
+  letter-spacing: 0.12em;
+}
+
+.small-text {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 0.12em;
+  font-size: 1.3rem;
+}
+
+
+.app {
+  background: #0e0e11;
+  padding: 10px;
+  width: 100%;
+  min-height: 100vh;
+  color: white;
+}
