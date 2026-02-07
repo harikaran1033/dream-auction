@@ -5,6 +5,13 @@ import GlowButton from "../components/ui/Glowbutton.jsx";
 import TeamGrid from "../components/ui/TeamGrid.jsx";
 import RetentionToggle from "../components/ui/RetentionToggle.jsx";
 import { useNavigate } from "react-router-dom";
+import Tabs from "../components/ui/Tabs.jsx";
+import LoaderOverlay from "../components/ui/LoaderOverlay.jsx";
+
+const ROOM_TABS = [
+  { label: "Create Game", value: "create" },
+  { label: "Join Room", value: "join" },
+];
 
 const Home = () => {
   const [hostUserName, setHostUserName] = useState("");
@@ -16,6 +23,9 @@ const Home = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [leagues, setLeagues] = useState([]);
   const navigate = useNavigate();
+
+  const [publicRooms, setPublicRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   const currentData = useMemo(
     () => LEAGUES.find((l) => l.league === league),
@@ -48,6 +58,7 @@ const Home = () => {
     const data = await res.json();
     localStorage.setItem("participantId", data.participantId);
     localStorage.setItem("roomId", data.roomId);
+    localStorage.setItem("roomCode", data.roomCode);
 
     navigate(`/room/${data.roomId}`);
 
@@ -55,101 +66,128 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/leagues")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchLeagues = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/leagues");
+        const data = await res.json();
+
         setLeagues(data);
         setLeague(data[0]?.shortName); // default
-      });
+      } catch (error) {
+        console.error("Failed to fetch leagues", error);
+      }
+    };
+
+    fetchLeagues();
   }, []);
 
-  return (
-    <div className=" grid place-items-center">
-      <main className="mt-5 w-full flex flex-col items-center gap-6">
-        {/* Shared width wrapper */}
-        <div className="w-full max-w-72 md:max-w-lg lg:max-w-xl space-y-6">
-          {/* Buttons */}
-          <div className="flex border border-white/20 rounded-sm overflow-hidden">
-            <button
-              onClick={() => setActiveTab("create")}
-              className={`flex-1 py-2 font-bold transition bodyText
-      ${
-        activeTab === "create"
-          ? "bg-amber-500 text-black"
-          : "text-white/60 hover:text-white"
-      }`}
-            >
-              Create Game
-            </button>
+  useEffect(() => {
+    if (activeTab !== "join") return;
 
-            <button
-              onClick={() => setActiveTab("join")}
-              className={`flex-1 py-2 font-bold transition bodyText
-      ${
-        activeTab === "join"
-          ? "bg-amber-500 text-black"
-          : "text-white/60 hover:text-white"
-      }`}
-            >
-              Join Room
-            </button>
-          </div>
+    const fetchPublicRooms = async () => {
+      try {
+        setLoadingRooms(true);
 
+        const res = await fetch("http://localhost:5000/api/rooms/public");
+        const data = await res.json();
+        console.log(data);
+
+        setPublicRooms(data);
+      } catch (error) {
+        console.error("Failed to fetch public rooms", error);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+
+    fetchPublicRooms();
+  }, [activeTab]);
+
+return (
+    <div className="min-h-screen w-full bg-[#0B0F1A] text-white flex items-center justify-center px-4">
+      {/* MAIN WRAPPER */}
+      <div className="w-full max-w-xl">
+
+        {/* HEADER */}
+        <header className="text-center mb-6 mt-6">
+          <h1 className="hero-title text-5xl tracking-widest uppercase">
+            Cricket Auction
+          </h1>
+          <p className="text-xs uppercase tracking-wider text-white/40 mt-1">
+            Create or join a live auction room
+          </p>
+        </header>
+
+        {/* CARD */}
+        <div className="bg-[#141A2A] border border-white/10 rounded-2xl shadow-xl p-5 space-y-6">
+
+          {/* TABS */}
+          <Tabs
+            tabs={ROOM_TABS}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+          />
+
+          {/* CREATE TAB */}
           {activeTab === "create" && (
-            <div className="grid grid-cols-3 gap-x-3 gap-y-4">
+            <div className="grid grid-cols-3 gap-4 bodyText">
+
+              {/* NAME */}
               <input
                 type="text"
-                placeholder="Name"
-                className="w-full border p-3 border-white/10 bodyText col-span-3 text-sm"
+                placeholder="Auctioneer Name"
+                className="col-span-3 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-amber-400"
                 value={hostUserName}
                 onChange={(e) => setHostUserName(e.target.value)}
               />
+
+              {/* LEAGUE */}
               <select
-                className="border border-white/10 bodyText text-sm col-span-1 p-2"
+                className="col-span-1 bg-black/30 border border-white/10 rounded-lg px-3 py-3 text-sm"
                 value={league}
                 onChange={(e) => setLeague(e.target.value)}
               >
-                {["IPL", "SA20", "BBL", "100"].map((league) => (
-                  <option key={league} value={league} className="p-2 bg-black">
-                    {league}
+                <option value="">League</option>
+                {["IPL", "SA20", "BBL", "100"].map((l) => (
+                  <option key={l} value={l} className="bg-black">
+                    {l}
                   </option>
                 ))}
               </select>
+
+              {/* RETENTION */}
               <RetentionToggle
-                className="col-span-2 px-2"
+                className="col-span-2"
                 value={isRetentionEnabled}
                 onChange={setIsRetentionEnabled}
               />
 
-              <div className="flex w-full rounded-lg bg-white/10 p-1 col-span-3 bodyText ">
-                <button
-                  type="button"
-                  onClick={() => setIsPrivate(false)}
-                  className={`flex-1 py-2 text-sm rounded-md transition-all 
-      ${
-        !isPrivate
-          ? "bg-amber-400 text-black"
-          : "text-white/70 hover:text-white"
-      }`}
-                >
-                  Public
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsPrivate(true)}
-                  className={`flex-1 py-2 text-sm rounded-md transition-all
-      ${
-        isPrivate ? "bg-amber-400 text-black" : "text-white/70 hover:text-white"
-      }`}
-                >
-                  Private
-                </button>
+              {/* PUBLIC / PRIVATE */}
+              <div className="col-span-3 flex bg-black/30 border border-white/10 rounded-lg p-1">
+                {["Public", "Private"].map((type) => {
+                  const active = (type === "Private") === isPrivate;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setIsPrivate(type === "Private")}
+                      className={`flex-1 py-2 rounded-md text-sm transition-all
+                        ${
+                          active
+                            ? "bg-amber-400 text-black font-semibold"
+                            : "text-white/60 hover:text-white"
+                        }`}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* TEAM SELECT */}
               {currentData && (
                 <div className="col-span-3">
-                  <p className="text-[11px] tracking-wide uppercase text-white/30 pb-2">
-                    Choose your team
+                  <p className="text-[11px] uppercase tracking-widest text-white/40 mb-2">
+                    Select Your Team
                   </p>
                   <TeamGrid
                     teams={currentData.teams}
@@ -158,9 +196,11 @@ const Home = () => {
                   />
                 </div>
               )}
-              <div className="flex flex-col mt-5 gap-2  w-full bodyText col-span-3">
+
+              {/* CTA */}
+              <div className="col-span-3 pt-4">
                 <GlowButton
-                  label="Create Room"
+                  label="Start Auction"
                   color="#fbbf24"
                   onClick={handleCreateRoom}
                   disabled={!hostUserName || !league || !hostTeam}
@@ -169,23 +209,72 @@ const Home = () => {
             </div>
           )}
 
+          {/* JOIN TAB */}
           {activeTab === "join" && (
-            <div className="flex flex-col gap-3">
+            <div className="space-y-4 bodyText">
+
+              {/* PRIVATE JOIN */}
               <input
                 type="text"
-                placeholder="Enter Room Code"
-                className="w-full border p-3 border-white/10"
+                placeholder="Enter Private Room Code"
+                className="bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm"
               />
 
-              <GlowButton label="Join Room" color="#22c55e" />
+              <GlowButton label="Join Private Room" color="#22c55e" />
 
-              <button className="border p-2 border-white/10 font-semibold">
-                Browse Live
-              </button>
+              {/* PUBLIC ROOMS */}
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-xs uppercase tracking-widest text-white/40 mb-3">
+                  Public Rooms
+                </p>
+
+                {loadingRooms && (
+                  <p className="text-white/40 text-sm">Loading rooms…</p>
+                )}
+
+                {!loadingRooms && publicRooms.length === 0 && (
+                  <p className="text-white/50 text-sm">
+                    No public rooms available
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  {publicRooms.map((room) => (
+                    <div
+                      key={room._id}
+                      className="bg-black/30 border border-white/10 rounded-xl p-4"
+                    >
+                      <div className="flex justify-between items-center">
+                        <p className="font-semibold">{room.roomName}</p>
+                        <span className="text-xs text-amber-400 uppercase">
+                          {room.phase}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-white/50 mt-1">
+                        {room?.league?.shortName} · {room?.joinedTeams?.length}/
+                        {room.maxTeams}
+                      </p>
+
+                      <button
+                        className="w-full mt-3 py-2 border border-white/20 rounded-lg tracking-wide font-semibold hover:bg-amber-400 hover:text-black transition"
+                        onClick={() => navigate(`/room/${room._id}`)}
+                      >
+                        Join Auction
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
-      </main>
+
+        {/* FOOTER */}
+        <p className="text-center text-[10px] uppercase tracking-widest text-white/20 mt-6">
+          Live cricket auction experience
+        </p>
+      </div>
     </div>
   );
 };

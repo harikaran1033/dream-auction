@@ -20,7 +20,7 @@ async function seedLeague() {
       rules: {
         maxPlayersPerTeam: 25,
         maxOverseasPlayers: 8,
-        purseAmount: 100000000
+        purseAmount: 1200000000
       },
       isCustom: false,
       createdBy: "system"

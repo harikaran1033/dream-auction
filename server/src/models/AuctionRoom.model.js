@@ -1,14 +1,48 @@
 import mongoose from "mongoose";
 
+
+
 /**
- * Joined Team (room-scoped identity)
+ * Retained Player (team-scoped)
  */
+const RetainedPlayerSchema = new mongoose.Schema(
+  {
+    playerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Player",
+      required: true,
+    },
+
+    name: {
+      type: String,
+      required: true,
+    },
+
+    isOverseas: {
+      type: Boolean,
+      required: true,
+    },
+
+    // optional (future-proof)
+    retainedPrice: {
+      type: Number,
+    },
+  },
+  { _id: false }
+);
+
+
 const JoinedTeamSchema = new mongoose.Schema(
   {
     // Unique per room (uuid / nanoid)
     participantId: {
       type: String,
       required: true,
+    },
+
+    retainedPlayers:{
+       type:[RetainedPlayerSchema],
+       default:[],
     },
 
     rtm: {

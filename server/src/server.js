@@ -6,6 +6,8 @@ import app from "./app.js";
 import connectDB from "./config/db.js"
 import registerSockets from "./sockets/index.js"
 
+import {setIO} from "./sockets/io.js"
+
 dotenv.config()
 
 const PORT = process.env.PORT
@@ -21,6 +23,7 @@ const io = new Server(httpServer,{
      },
 })
 
+setIO(io)
 registerSockets(io)
 
 

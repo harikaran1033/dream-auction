@@ -3,6 +3,9 @@ import cors from "cors";
 
 import leagueRoutes from "./routes/league.routes.js";
 import roomRoutes from "./routes/room.routes.js";
+import "./models/PlayerSchema.model.js";
+import "./models/LeaguePlayer.model.js";
+
 
 const app = express();
 
@@ -15,8 +18,7 @@ app.get("/health", (_, res) => {
 
 // 🔴 THIS LINE IS REQUIRED
 app.use("/api/leagues", leagueRoutes);
-
-// existing rooms route
 app.use("/api/rooms", roomRoutes);
+
 
 export default app;
